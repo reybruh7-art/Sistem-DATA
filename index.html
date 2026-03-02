@@ -3,46 +3,97 @@
 <head>
   <title>Sistem Sekolah</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body { font-family: Arial; padding:20px; background:#f4f4f4; }
+    input, button { padding:8px; margin:5px; }
+    .card {
+      background:white;
+      padding:15px;
+      margin:10px 0;
+      border-radius:8px;
+      box-shadow:0 2px 5px rgba(0,0,0,0.1);
+    }
+    .btn-delete { background:red; color:white; }
+    .btn-edit { background:orange; color:white; }
+  </style>
 </head>
 <body>
-  <h2>Tambah Data Siswa</h2>
 
-  <input type="text" id="nama" placeholder="Nama">
-  <input type="text" id="kelas" placeholder="Kelas">
-  <input type="text" id="laporan" placeholder="Laporan">
-  <button onclick="tambahSiswa()">Tambah</button>
+<h2>Sistem Sekolah</h2>
 
-  <h2>Data Siswa</h2>
-  <ul id="list"></ul>
+<input type="text" id="nama" placeholder="Nama">
+<input type="text" id="kelas" placeholder="Kelas">
+<input type="text" id="laporan" placeholder="Laporan">
+<button onclick="tambah()">Tambah</button>
 
-  <script>
-    const supabase = supabase.createClient(
-      "https://awgfqjzzkkgmlmyuhtqt.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3Z2Zxanp6a2tnbWxteXVodHF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0Mjg2MzQsImV4cCI6MjA4ODAwNDYzNH0.vTcc0M36Qd4aYAkkMAiTxDnyeCY7ZujDjvaOC94bbMM"
-    );
+<br><br>
+<input type="text" id="search" placeholder="Search..." oninput="loadData()">
 
-    async function tambahSiswa() {
-      const nama = document.getElementById("nama").value;
-      const kelas = document.getElementById("kelas").value;
-      const laporan = document.getElementById("laporan").value;
+<div id="list"></div>
 
-      await supabase.from("siswa").insert([{ nama, kelas, laporan }]);
+<script>
+const supabase = supabase.createClient(
+  "https://awgfqjzzkkgmlmyuhtqt.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3Z2Zxanp6a2tnbWxteXVodHF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0Mjg2MzQsImV4cCI6MjA4ODAwNDYzNH0.vTcc0M36Qd4aYAkkMAiTxDnyeCY7ZujDjvaOC94bbMM"
+);
 
-      loadData();
-    }
+async function tambah() {
+  const nama = namaInput.value;
+  const kelas = kelasInput.value;
+  const laporan = laporanInput.value;
 
-    async function loadData() {
-      const { data } = await supabase.from("siswa").select("*");
+  await supabase.from("siswa").insert([{ nama, kelas, laporan }]);
+  loadData();
+}
 
-      const list = document.getElementById("list");
-      list.innerHTML = "";
+async function hapus(id) {
+  await supabase.from("siswa").delete().eq("id", id);
+  loadData();
+}
 
-      data.forEach(s => {
-        list.innerHTML += `<li>${s.nama} - ${s.kelas} - ${s.laporan}</li>`;
-      });
-    }
+async function edit(id) {
+  const laporanBaru = prompt("Update laporan:");
+  if(!laporanBaru) return;
 
-    loadData();
-  </script>
+  await supabase.from("siswa")
+    .update({ laporan: laporanBaru })
+    .eq("id", id);
+
+  loadData();
+}
+
+async function loadData() {
+  const keyword = document.getElementById("search").value;
+
+  let query = supabase.from("siswa").select("*");
+
+  if(keyword) {
+    query = query.ilike("nama", `%${keyword}%`);
+  }
+
+  const { data } = await query;
+
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+
+  data.forEach(s => {
+    list.innerHTML += `
+      <div class="card">
+        <b>${s.nama}</b> - ${s.kelas}<br>
+        Laporan: ${s.laporan}<br><br>
+        <button class="btn-edit" onclick="edit(${s.id})">Edit</button>
+        <button class="btn-delete" onclick="hapus(${s.id})">Hapus</button>
+      </div>
+    `;
+  });
+}
+
+const namaInput = document.getElementById("nama");
+const kelasInput = document.getElementById("kelas");
+const laporanInput = document.getElementById("laporan");
+
+loadData();
+</script>
+
 </body>
 </html>

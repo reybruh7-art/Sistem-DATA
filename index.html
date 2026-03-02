@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sistem Sekolah</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #4e73df, #1cc88a);
+      padding: 20px;
+      color: white;
+    }
+
+    h2 {
+      text-align: center;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+      border: none;
+      border-radius: 8px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+      border: none;
+      border-radius: 8px;
+      background: #f6c23e;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #dda20a;
+    }
+
+    #admin, #ortu {
+      display: none;
+      background: rgba(0,0,0,0.2);
+      padding: 15px;
+      border-radius: 12px;
+      margin-top: 20px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      background: rgba(255,255,255,0.2);
+      padding: 8px;
+      border-radius: 8px;
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+
+<h2 id="loginTitle">Login Sistem Sekolah</h2>
+<input type="text" id="username" placeholder="Username">
+<input type="password" id="password" placeholder="Password">
+<button id="loginBtn" onclick="login()">Login</button>
+
+<div id="admin">
+  <h2>Dashboard Admin</h2>
+
+  <input type="text" id="nama" placeholder="Nama Siswa">
+  <input type="text" id="kelas" placeholder="Kelas">
+  <button onclick="tambahSiswa()">Tambah / Update</button>
+
+  <input type="text" id="search" placeholder="Cari nama atau kelas..." onkeyup="cariSiswa()">
+
+  <ul id="list"></ul>
+
+  <button onclick="logout()">Logout</button>
+</div>
+
+<div id="ortu">
+  <h2>Dashboard Orang Tua</h2>
+  <ul id="listOrtu"></ul>
+  <button onclick="logout()">Logout</button>
+</div>
+
+<script>
+let siswa = JSON.parse(localStorage.getItem("dataSiswa")) || [];
+let editIndex = -1;
+
+window.onload = function() {
+  let role = localStorage.getItem("role");
+  if(role === "admin") bukaAdmin();
+  if(role === "ortu") bukaOrtu();
+};
+
+function login() {
+  let user = document.getElementById("username").value;
+  let pass = document.getElementById("password").value;
+
+  if(user === "admin" && pass === "admin123") {
+    localStorage.setItem("role", "admin");
+    bukaAdmin();
+  } else if(user === "ortu" && pass === "ortu123") {
+    localStorage.setItem("role", "ortu");
+    bukaOrtu();
+  } else {
+    alert("Login salah");
+  }
+}
+
+function bukaAdmin() {
+  document.getElementById("loginTitle").style.display = "none";
+  document.getElementById("username").style.display = "none";
+  document.getElementById("password").style.display = "none";
+  document.getElementById("loginBtn").style.display = "none";
+  document.getElementById("admin").style.display = "block";
+  tampilkan();
+}
+
+function bukaOrtu() {
+  document.getElementById("loginTitle").style.display = "none";
+  document.getElementById("username").style.display = "none";
+  document.getElementById("password").style.display = "none";
+  document.getElementById("loginBtn").style.display = "none";
+  document.getElementById("ortu").style.display = "block";
+  tampilkanOrtu();
+}
+
+function tambahSiswa() {
+  if(localStorage.getItem("role") !== "admin") return;
+
+  let nama = document.getElementById("nama").value;
+  let kelas = document.getElementById("kelas").value;
+
+  if(editIndex === -1) {
+    siswa.push({nama, kelas});
+  } else {
+    siswa[editIndex] = {nama, kelas};
+    editIndex = -1;
+  }
+
+  localStorage.setItem("dataSiswa", JSON.stringify(siswa));
+  document.getElementById("nama").value = "";
+  document.getElementById("kelas").value = "";
+  tampilkan();
+}
+
+function tampilkan() {
+  let list = document.getElementById("list");
+  list.innerHTML = "";
+  siswa.forEach((s, i) => {
+    list.innerHTML += `
+      <li>
+        ${s.nama} - ${s.kelas}
+        <button onclick="edit(${i})">Edit</button>
+        <button onclick="hapus(${i})">Hapus</button>
+      </li>
+    `;
+  });
+}
+
+function cariSiswa() {
+  let keyword = document.getElementById("search").value.toLowerCase();
+  let list = document.getElementById("list");
+  list.innerHTML = "";
+
+  siswa
+    .filter(s =>
+      s.nama.toLowerCase().includes(keyword) ||
+      s.kelas.toLowerCase().includes(keyword)
+    )
+    .forEach((s, i) => {
+      list.innerHTML += `
+        <li>
+          ${s.nama} - ${s.kelas}
+          <button onclick="edit(${i})">Edit</button>
+          <button onclick="hapus(${i})">Hapus</button>
+        </li>
+      `;
+    });
+}
+
+function edit(index) {
+  document.getElementById("nama").value = siswa[index].nama;
+  document.getElementById("kelas").value = siswa[index].kelas;
+  editIndex = index;
+}
+
+function hapus(index) {
+  siswa.splice(index, 1);
+  localStorage.setItem("dataSiswa", JSON.stringify(siswa));
+  tampilkan();
+}
+
+function tampilkanOrtu() {
+  let list = document.getElementById("listOrtu");
+  list.innerHTML = "";
+  siswa.forEach((s) => {
+    list.innerHTML += `<li>${s.nama} - ${s.kelas}</li>`;
+  });
+}
+
+function logout() {
+  localStorage.removeItem("role");
+  location.reload();
+}
+</script>
+
+</body>
+</html>
